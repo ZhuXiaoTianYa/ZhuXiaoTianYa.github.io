@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Zhu Tian">
+
+
+
+
+
+<title>双指针_移动零 | Hexo</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 8.0.0"></head>
+
+<body>
+    <script>
+        // this function is used to check current theme before page loaded.
+        (() => {
+            const pagebody = document.getElementsByTagName('body')[0]
+
+            function setTheme(status) {
+
+                if (status === 'dark') {
+                    window.sessionStorage.theme = 'dark'
+                    pagebody.classList.add('dark-theme');
+
+                } else if (status === 'light') {
+                    window.sessionStorage.theme = 'light'
+                    pagebody.classList.remove('dark-theme');
+                }
+            };
+
+            setTheme(window.sessionStorage.theme)
+        })();
+    </script>
+
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">ZhuTian&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                <a class="menu-item" href="/archives">Posts</a>
+                
+                <a class="menu-item" href="/category">Categories</a>
+                
+                <a class="menu-item" href="/tag">Tags</a>
+                
+                <a class="menu-item" href="/about">About</a>
+                
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">ZhuTian&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">
+                    <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M4.5 17.27q-.213 0-.356-.145T4 16.768t.144-.356t.356-.143h15q.213 0 .356.144q.144.144.144.357t-.144.356t-.356.143zm0-4.77q-.213 0-.356-.144T4 11.999t.144-.356t.356-.143h15q.213 0 .356.144t.144.357t-.144.356t-.356.143zm0-4.77q-.213 0-.356-.143Q4 7.443 4 7.23t.144-.356t.356-.143h15q.213 0 .356.144T20 7.23t-.144.356t-.356.144z"/></svg>
+                    <svg class="close-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="m12 12.708l-5.246 5.246q-.14.14-.344.15t-.364-.15t-.16-.354t.16-.354L11.292 12L6.046 6.754q-.14-.14-.15-.344t.15-.364t.354-.16t.354.16L12 11.292l5.246-5.246q.14-.14.345-.15q.203-.01.363.15t.16.354t-.16.354L12.708 12l5.246 5.246q.14.14.15.345q.01.203-.15.363t-.354.16t-.354-.16z"/></svg>
+                </div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                <a class="menu-item" href="/archives">Posts</a>
+                
+                <a class="menu-item" href="/category">Categories</a>
+                
+                <a class="menu-item" href="/tag">Tags</a>
+                
+                <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if (toggleMenu.classList.contains("active")) {
+            toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        } else {
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+            <div class="main">
+                <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    var tocbot_timer;
+    var DEPTH_MAX = 6; // 为 6 时展开所有
+    var tocbot_default_config = {
+        tocSelector: '.tocbot-list',
+        contentSelector: '.post-content',
+        headingSelector: 'h1, h2, h3, h4, h5',
+        orderedList: false,
+        scrollSmooth: true,
+        onClick: extend_click,
+    };
+
+    function extend_click() {
+        clearTimeout(tocbot_timer);
+        tocbot_timer = setTimeout(function() {
+            tocbot.refresh(obj_merge(tocbot_default_config, {
+                hasInnerContainers: true
+            }));
+        }, 420); // 这个值是由 tocbot 源码里定义的 scrollSmoothDuration 得来的
+    }
+
+    document.ready(function() {
+        tocbot.init(obj_merge(tocbot_default_config, {
+            collapseDepth: 1
+        }));
+    });
+
+    function expand_toc() {
+        var b = document.querySelector('.tocbot-toc-expand');
+        var expanded = b.getAttribute('data-expanded');
+        expanded ? b.removeAttribute('data-expanded') : b.setAttribute('data-expanded', true);
+        tocbot.refresh(obj_merge(tocbot_default_config, {
+            collapseDepth: expanded ? 1 : DEPTH_MAX
+        }));
+        b.innerText = expanded ? 'Expand all' : 'Collapse all';
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function obj_merge(target, source) {
+        for (var item in source) {
+            if (source.hasOwnProperty(item)) {
+                target[item] = source[item];
+            }
+        }
+        return target;
+    }
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">双指针_移动零</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">Zhu Tian</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">October 21, 2025&nbsp;&nbsp;11:03:35</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h2 id="双指针-移动零"><a href="#双指针-移动零" class="headerlink" title="双指针_移动零"></a>双指针_移动零</h2><p><strong>题目</strong> [移动零](<a target="_blank" rel="noopener" href="https://leetcode.cn/problems/move-zeroes/">283. 移动零 - 力扣（LeetCode）</a>)</p>
+<h3 id="题目解析"><a href="#题目解析" class="headerlink" title="题目解析"></a>题目解析</h3><hr>
+<ul>
+<li>需要将<code>[0,1,0,3,12]</code>数组中的 0 放到数组后面，非零放到数组前面</li>
+<li>需要保持非零元素相对顺序不变</li>
+<li>不能复制数组，在原数组操作</li>
+</ul>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015082319008.png" alt="image-20251015082319008"></p>
+<h3 id="算法原理"><a href="#算法原理" class="headerlink" title="算法原理"></a>算法原理</h3><hr>
+<p>这类题可以称作数组划分或者数组分块</p>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015083000671.png" alt="image-20251015083000671"></p>
+<p><strong>双指针算法</strong> int* （在数组中利用数组下标来充当指针）</p>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015083336615.png" alt="image-20251015083336615"></p>
+<hr>
+<p><strong>双指针法</strong>也是<strong>快速排序</strong>中最核心的一步，也就是数据划分这一步。</p>
+<ul>
+<li>先设置一个基准元素 tmp</li>
+<li>根据基本元素，划分为左边小于 tmp，右边大于 tmp</li>
+<li>但是当数据量全是相同的数的时候，复杂度是逼近 n² 的，因此以后将数组分为三块，是最好的解法</li>
+</ul>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015085730458.png" alt="image-20251015085730458"></p>
+<p><strong>两个指针的作用</strong></p>
+<ul>
+<li>cur：从左往右扫描数组，遍历数组</li>
+<li>dest：已处理的区间内，非零元素的最后一个位置</li>
+</ul>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015083540222.png" alt="image-20251015083540222"></p>
+<p><strong>三个区间</strong></p>
+<p>两个指针将数组分为三个区间</p>
+<ul>
+<li>[0,dest] : 已处理的区间,为非零元素</li>
+<li>[dest+1,cur-1] : 已处理区间，为零元素</li>
+<li>[cur,n-1] : 待处理区间</li>
+</ul>
+<p>当 cur 从左往右遍历时，这三个区间能保持原有的性质，当 cur 走到 n 的时候，待处理区间就消失了，只剩处理好的两个区间，得解</p>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015084224059.png" alt="image-20251015084224059"></p>
+<p><strong>处理过程</strong></p>
+<hr>
+<ul>
+<li>一开始，dest 指向-1 ，cur 指向 0 元素</li>
+</ul>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015084609043.png" alt="image-20251015084609043"></p>
+<hr>
+<ul>
+<li>在移动过程中，会有两种情况，当遇到零元素时，cur 移动一位即可</li>
+</ul>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015084746786.png" alt="image-20251015084746786"></p>
+<hr>
+<ul>
+<li>当遇到非零时，需要让该元素加入到第一个区间，也就是非零区间</li>
+<li>非零区间元素要加一位，dest 应该加一</li>
+<li>所以应该 dest+1 ，然后交换 dest 与 cur 的元素</li>
+<li>这就分为了三个区间了，非零，零，待处理区间</li>
+</ul>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015085022490.png" alt="image-20251015085022490"></p>
+<hr>
+<ul>
+<li>最终达到效果</li>
+</ul>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015085249865.png" alt="image-20251015085249865"></p>
+<p><strong>如何做到</strong></p>
+<blockquote>
+<p>cur 从前往后遍历的过程中：</p>
+<p>​ 1.遇到零元素：cur++</p>
+<p>​ 2.遇到非零元素：</p>
+<p>​ swap(dest+1,cur);</p>
+<p>​ dest++,cur++;</p>
+</blockquote>
+<hr>
+<p><strong>说明</strong></p>
+<blockquote>
+<p>cur：current 当前的，最近的</p>
+<p>dest： destination 目的地</p>
+</blockquote>
+<hr>
+<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><p><strong>mycode</strong></p>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015081932050.png" alt="image-20251015081932050"></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">moveZeroes</span><span class="params">(vector&lt;<span class="type">int</span>&gt;&amp; nums)</span> </span>&#123;</span><br><span class="line">        <span class="type">int</span> cur=<span class="number">0</span>;</span><br><span class="line">        <span class="type">int</span> dest=<span class="number">-1</span>;</span><br><span class="line">        <span class="type">size_t</span> length=nums.<span class="built_in">size</span>();</span><br><span class="line">        <span class="keyword">while</span>(cur&lt;length)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">if</span>(nums[cur]==<span class="number">0</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                cur++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">            &#123;</span><br><span class="line">                <span class="type">int</span> temp=nums[cur];</span><br><span class="line">                nums[cur]=<span class="number">0</span>;</span><br><span class="line">                nums[++dest]=temp;</span><br><span class="line">                cur++;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><strong>code</strong></p>
+<p><img src="/../images/%E5%8F%8C%E6%8C%87%E9%92%88_%E7%A7%BB%E5%8A%A8%E9%9B%B6.assets/image-20251015090515758.png" alt="image-20251015090515758"></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Solution</span> &#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">moveZeroes</span><span class="params">(vector&lt;<span class="type">int</span>&gt;&amp; nums)</span> </span>&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> cur=<span class="number">0</span>,dest=<span class="number">-1</span>;cur&lt;nums.<span class="built_in">size</span>();cur++)</span><br><span class="line">            <span class="keyword">if</span>(nums[cur]) <span class="comment">//处理非零元素</span></span><br><span class="line">                <span class="built_in">swap</span>(nums[++dest],nums[cur]);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>示例代码写的简洁，自己写的太复杂了，应该多精炼代码</p>
+</blockquote>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>Zhu Tian</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="http://example.com/2025/10/21/%E5%8F%8C%E6%8C%87%E9%92%88-%E7%A7%BB%E5%8A%A8%E9%9B%B6/">http://example.com/2025/10/21/%E5%8F%8C%E6%8C%87%E9%92%88-%E7%A7%BB%E5%8A%A8%E9%9B%B6/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a target="_blank" rel="noopener" href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+                     <p class="copyright-item">
+                         <span>Slogan:</span>
+                         <span>Do you believe in <strong>DESTINY</strong>?</span>
+                     </p>
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+                <a class="prev" rel="prev" href="/2025/10/21/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6/">Linux进程控制</a>
+            
+            
+            <a class="next" rel="next" href="/2025/10/21/C-%E5%BC%95%E7%94%A8%E4%BD%BF%E7%94%A8/">C++引用使用</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+            </div>
+            <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© Zhu Tian | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+
+</html>

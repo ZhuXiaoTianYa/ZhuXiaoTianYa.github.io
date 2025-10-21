@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+
+    <meta name="author" content="Zhu Tian">
+
+
+
+
+
+<title>Linux进程控制 | Hexo</title>
+
+
+
+    <link rel="icon" href="/favicon.ico">
+
+
+
+
+    <!-- stylesheets list from _config.yml -->
+    
+    <link rel="stylesheet" href="/css/style.css">
+    
+
+
+
+    <!-- scripts list from _config.yml -->
+    
+    <script src="/js/script.js"></script>
+    
+    <script src="/js/tocbot.min.js"></script>
+    
+
+
+
+    
+    
+        
+    
+
+
+<meta name="generator" content="Hexo 8.0.0"></head>
+
+<body>
+    <script>
+        // this function is used to check current theme before page loaded.
+        (() => {
+            const pagebody = document.getElementsByTagName('body')[0]
+
+            function setTheme(status) {
+
+                if (status === 'dark') {
+                    window.sessionStorage.theme = 'dark'
+                    pagebody.classList.add('dark-theme');
+
+                } else if (status === 'light') {
+                    window.sessionStorage.theme = 'light'
+                    pagebody.classList.remove('dark-theme');
+                }
+            };
+
+            setTheme(window.sessionStorage.theme)
+        })();
+    </script>
+
+    <div class="wrapper">
+        <header>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-header header-logo"><a href="/">ZhuTian&#39;s Blog</a></div>
+            <div class="menu navbar-right">
+                
+                <a class="menu-item" href="/archives">Posts</a>
+                
+                <a class="menu-item" href="/category">Categories</a>
+                
+                <a class="menu-item" href="/tag">Tags</a>
+                
+                <a class="menu-item" href="/about">About</a>
+                
+                
+                <input id="switch_default" type="checkbox" class="switch_default">
+                <label for="switch_default" class="toggleBtn"></label>
+            </div>
+        </div>
+    </nav>
+
+    
+    <nav class="navbar-mobile" id="nav-mobile">
+        <div class="container">
+            <div class="navbar-header">
+                <div>
+                    <a href="/">ZhuTian&#39;s Blog</a><a id="mobile-toggle-theme">·&nbsp;Light</a>
+                </div>
+                <div class="menu-toggle" onclick="mobileBtn()">
+                    <svg class="menu-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="currentColor" d="M4.5 17.27q-.213 0-.356-.145T4 16.768t.144-.356t.356-.143h15q.213 0 .356.144q.144.144.144.357t-.144.356t-.356.143zm0-4.77q-.213 0-.356-.144T4 11.999t.144-.356t.356-.143h15q.213 0 .356.144t.144.357t-.144.356t-.356.143zm0-4.77q-.213 0-.356-.143Q4 7.443 4 7.23t.144-.356t.356-.143h15q.213 0 .356.144T20 7.23t-.144.356t-.356.144z"/></svg>
+                    <svg class="close-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Material Symbols Light by Google - https://github.com/google/material-design-icons/blob/master/LICENSE --><path fill="currentColor" d="m12 12.708l-5.246 5.246q-.14.14-.344.15t-.364-.15t-.16-.354t.16-.354L11.292 12L6.046 6.754q-.14-.14-.15-.344t.15-.364t.354-.16t.354.16L12 11.292l5.246-5.246q.14-.14.345-.15q.203-.01.363.15t.16.354t-.16.354L12.708 12l5.246 5.246q.14.14.15.345q.01.203-.15.363t-.354.16t-.354-.16z"/></svg>
+                </div>
+            </div>
+            <div class="menu" id="mobile-menu">
+                
+                <a class="menu-item" href="/archives">Posts</a>
+                
+                <a class="menu-item" href="/category">Categories</a>
+                
+                <a class="menu-item" href="/tag">Tags</a>
+                
+                <a class="menu-item" href="/about">About</a>
+                
+            </div>
+        </div>
+    </nav>
+
+</header>
+<script>
+    var mobileBtn = function f() {
+        var toggleMenu = document.getElementsByClassName("menu-toggle")[0];
+        var mobileMenu = document.getElementById("mobile-menu");
+        if (toggleMenu.classList.contains("active")) {
+            toggleMenu.classList.remove("active")
+            mobileMenu.classList.remove("active")
+        } else {
+            toggleMenu.classList.add("active")
+            mobileMenu.classList.add("active")
+        }
+    }
+</script>
+            <div class="main">
+                <div class="container">
+    
+    
+        <div class="post-toc">
+    <div class="tocbot-list">
+    </div>
+    <div class="tocbot-list-menu">
+        <a class="tocbot-toc-expand" onclick="expand_toc()">Expand all</a>
+        <a onclick="go_top()">Back to top</a>
+        <a onclick="go_bottom()">Go to bottom</a>
+    </div>
+</div>
+
+<script>
+    var tocbot_timer;
+    var DEPTH_MAX = 6; // 为 6 时展开所有
+    var tocbot_default_config = {
+        tocSelector: '.tocbot-list',
+        contentSelector: '.post-content',
+        headingSelector: 'h1, h2, h3, h4, h5',
+        orderedList: false,
+        scrollSmooth: true,
+        onClick: extend_click,
+    };
+
+    function extend_click() {
+        clearTimeout(tocbot_timer);
+        tocbot_timer = setTimeout(function() {
+            tocbot.refresh(obj_merge(tocbot_default_config, {
+                hasInnerContainers: true
+            }));
+        }, 420); // 这个值是由 tocbot 源码里定义的 scrollSmoothDuration 得来的
+    }
+
+    document.ready(function() {
+        tocbot.init(obj_merge(tocbot_default_config, {
+            collapseDepth: 1
+        }));
+    });
+
+    function expand_toc() {
+        var b = document.querySelector('.tocbot-toc-expand');
+        var expanded = b.getAttribute('data-expanded');
+        expanded ? b.removeAttribute('data-expanded') : b.setAttribute('data-expanded', true);
+        tocbot.refresh(obj_merge(tocbot_default_config, {
+            collapseDepth: expanded ? 1 : DEPTH_MAX
+        }));
+        b.innerText = expanded ? 'Expand all' : 'Collapse all';
+    }
+
+    function go_top() {
+        window.scrollTo(0, 0);
+    }
+
+    function go_bottom() {
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    function obj_merge(target, source) {
+        for (var item in source) {
+            if (source.hasOwnProperty(item)) {
+                target[item] = source[item];
+            }
+        }
+        return target;
+    }
+</script>
+    
+
+    
+    <article class="post-wrap">
+        <header class="post-header">
+            <h1 class="post-title">Linux进程控制</h1>
+            
+                <div class="post-meta">
+                    
+                        Author: <a itemprop="author" rel="author" href="/">Zhu Tian</a>
+                    
+
+                    
+                        <span class="post-time">
+                        Date: <a href="#">October 21, 2025&nbsp;&nbsp;11:05:39</a>
+                        </span>
+                    
+                    
+                </div>
+            
+        </header>
+
+        <div class="post-content">
+            <h1 id="Linux-进程控制"><a href="#Linux-进程控制" class="headerlink" title="Linux 进程控制"></a>Linux 进程控制</h1><h2 id="进程创建"><a href="#进程创建" class="headerlink" title="进程创建"></a>进程创建</h2><h3 id="fork-函数初识"><a href="#fork-函数初识" class="headerlink" title="fork 函数初识"></a>fork 函数初识</h3><p>在 linux 中 fork 函数时非常重要的函数，它从已存在进程中创建一个新进程。新进程为子进程，而原进程为父进程。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line"> pid_t fork(void);</span><br><span class="line">返回值：自进程中返回0，父进程返回子进程id,出错返回-1</span><br></pre></td></tr></table></figure>
+
+<p>进程调用 fork, 当控制转移到内核中的 fork 代码后,内核做:</p>
+<blockquote>
+<ul>
+<li>分配新的内存块和内核数据结构给子进程</li>
+<li>将父进程部分数据结构内容拷贝至子进程</li>
+<li>添加子进程到系统进程列表当中</li>
+<li>fork 返回,开始调度器调度</li>
+</ul>
+</blockquote>
+<p><img src="/../images/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6.assets/fork_upscayl_4x_digital-art-4x.png" alt="fork_upscayl_4x_digital-art-4x"></p>
+<p>当一个进程调用 fork 之后，就有两个二进制代码相同的进程。而且它们都运行到相同的地方. 但每个进程都将可以开始它们自己的旅程,看如下程序.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    pid_t pid;</span><br><span class="line">    printf(&quot;Before: pid is %d\n&quot;, getpid());</span><br><span class="line">    pid = fork();</span><br><span class="line">    if (pid == -1)</span><br><span class="line">        perror(&quot;fork error:&quot;), exit(1);</span><br><span class="line">    printf(&quot;After: pid is %d, fork return %d\n&quot;, getpid(), pid);</span><br><span class="line">    sleep(1);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">运行结果:</span><br><span class="line">[zhutian@VM-8-3-centos meet_fork]$ ./meet_fork</span><br><span class="line">Before: pid is 20965</span><br><span class="line">After: pid is 20965, fork return 20966</span><br><span class="line">After: pid is 20966, fork return 0</span><br></pre></td></tr></table></figure>
+
+<p>这里看到了三行输出，一行 before，两行 after。进程 20965 先打印 before 消息，然后它有打印 after。另一个 after 消息有 20966 打印的。注意到进程 20966 没有打印 before，为什么呢？如下图所示</p>
+<p><img src="/../images/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6.assets/forkbp_upscayl_4x_digital-art-4x.png" alt="forkbp_upscayl_4x_digital-art-4x"></p>
+<p>所以,fork 之前父进程独立执行, fork 之后, 父子两个执行流分别执行. 注意, fork 之后,谁先执行完全由调度器决定</p>
+<h3 id="fork-函数返回值"><a href="#fork-函数返回值" class="headerlink" title="fork 函数返回值"></a>fork 函数返回值</h3><blockquote>
+<ul>
+<li>子进程返回 0</li>
+<li>父进程返回的是子进程的 pid</li>
+</ul>
+</blockquote>
+<h3 id="写时拷贝"><a href="#写时拷贝" class="headerlink" title="写时拷贝"></a>写时拷贝</h3><p>通常,父子代码共享,父子不再写入时,数据也是共享的,当任意一方试图写入,便以写时拷贝的方式各自拷贝一份副本,具体如图:</p>
+<p><img src="/../images/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6.assets/%E5%86%99%E6%97%B6%E6%8B%B7%E8%B4%9Dp_upscayl_4x_digital-art-4x.png" alt="写时拷贝p_upscayl_4x_digital-art-4x"></p>
+<h3 id="fork-常规用法"><a href="#fork-常规用法" class="headerlink" title="fork 常规用法"></a>fork 常规用法</h3><blockquote>
+<ul>
+<li>一个父进程希望复制自己, 使父子进程同时执行不同的代码段. 例如,父进程等待客户端请求,生成子进程来处理请求.</li>
+<li>一个进程要执行一个不同的程序. 例如子进程从 fork 返回后,调用 exec 函数</li>
+</ul>
+</blockquote>
+<h3 id="fork-调用失败的原因"><a href="#fork-调用失败的原因" class="headerlink" title="fork 调用失败的原因"></a>fork 调用失败的原因</h3><blockquote>
+<ul>
+<li>系统中有太多的进程</li>
+<li>实际用户的进程数超过限制</li>
+</ul>
+</blockquote>
+<h2 id="进程终止"><a href="#进程终止" class="headerlink" title="进程终止"></a>进程终止</h2><h3 id="进程退出场景"><a href="#进程退出场景" class="headerlink" title="进程退出场景"></a>进程退出场景</h3><blockquote>
+<ul>
+<li>代码运行完毕,结果正确</li>
+<li>代码运行完毕,结果不正确</li>
+<li>代码异常终止</li>
+</ul>
+</blockquote>
+<h3 id="进程常见退出方法"><a href="#进程常见退出方法" class="headerlink" title="进程常见退出方法"></a>进程常见退出方法</h3><p>正常终止(可以通过 echo $? 查看进程退出码)</p>
+<blockquote>
+<p>1.从 main 返回</p>
+<p>2.调用 exit</p>
+<p>3._exit</p>
+</blockquote>
+<h3 id="异常退出"><a href="#异常退出" class="headerlink" title="异常退出"></a>异常退出</h3><blockquote>
+<ul>
+<li>ctrl + c , 信号终止</li>
+</ul>
+</blockquote>
+<h3 id="exit-函数"><a href="#exit-函数" class="headerlink" title="_exit 函数"></a>_exit 函数</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">void _exit(int status);</span><br><span class="line">参数：status 定义了进程的终止状态，父进程通过wait来获取该值</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ul>
+<li>说明: 虽然 status 是 int, 但是仅有低 8 位可以被父进程所用. 所以_exit(-1)时,在终端执行$?发现返回值是 255</li>
+</ul>
+</blockquote>
+<h3 id="exit-函数-1"><a href="#exit-函数-1" class="headerlink" title="exit 函数"></a>exit 函数</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">void exit(int status);</span><br></pre></td></tr></table></figure>
+
+<p>exit 最后也会调用<code>_exit</code>, 但在调用_exit 之前,还做了其他工作:</p>
+<blockquote>
+<p>1.执行用户通过 atexit 或 on_exit 定义的清理函数</p>
+<p>2.关闭所有打开的流, 所有的缓存数据均被写入</p>
+<p>3.调用_exit</p>
+</blockquote>
+<p><img src="/../images/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6.assets/exitp_upscayl_4x_digital-art-4x.png" alt="exitp_upscayl_4x_digital-art-4x"></p>
+<p>示例:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">exit代码:</span><br><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    printf(&quot;hello&quot;);</span><br><span class="line">    exit(0);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">运行结果:</span><br><span class="line">[zhutian@VM-8-3-centos meet_exit]$ ./exit_example</span><br><span class="line">hello[zhutian@VM-8-3-centos meet_exit]$</span><br><span class="line"></span><br><span class="line">_exit代码:</span><br><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    printf(&quot;hello&quot;);</span><br><span class="line">    _exit(0);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">运行结果:</span><br><span class="line">[zhutian@VM-8-3-centos meet_exit]$ ./_exit_example</span><br><span class="line">[zhutian@VM-8-3-centos meet_exit]$</span><br></pre></td></tr></table></figure>
+
+<h3 id="return-退出"><a href="#return-退出" class="headerlink" title="return 退出"></a>return 退出</h3><p>return 是一种更常见的退出进程方式. 执行 return (n)等同于执行 exit(n), 因为调用 main 的运行函数会将 main 的返回值当作 exit 的参数</p>
+<h2 id="进程等待"><a href="#进程等待" class="headerlink" title="进程等待"></a>进程等待</h2><h3 id="进程等待必要性"><a href="#进程等待必要性" class="headerlink" title="进程等待必要性"></a>进程等待必要性</h3><blockquote>
+<ul>
+<li>子进程退出,父进程如果不管不顾,就可能造成‘僵尸进程’的问题, 进而造成内存泄漏</li>
+<li>另外, 进程一旦变成僵尸状态, 那就刀枪不入, “杀人不眨眼”的 kill -9 也无能为力. 因为谁也没有办法杀死一个已经死去的进程</li>
+<li>最后, 父进程派给子进程的任务完成的如何, 我们需要知道. 如, 子进程运行完成, 结果对还是不对, 或者是否正常退出.</li>
+<li>父进程通过进程等待的方式, 回收子进程资源, 获取子进程退出信息</li>
+</ul>
+</blockquote>
+<h3 id="进程等待的方法"><a href="#进程等待的方法" class="headerlink" title="进程等待的方法"></a>进程等待的方法</h3><h4 id="wait-方法"><a href="#wait-方法" class="headerlink" title="wait 方法"></a>wait 方法</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;sys/types.h&gt;</span><br><span class="line">#include &lt;sys/wait.h&gt;</span><br><span class="line"></span><br><span class="line">pid_t wait(int * status);</span><br><span class="line"></span><br><span class="line">返回值:</span><br><span class="line">	成功返回被等待进程的pid, 失败返回-1.</span><br><span class="line">参数:</span><br><span class="line">	输出型参数, 获取子进程退出状态,不关心则可以设置成NULL</span><br></pre></td></tr></table></figure>
+
+<h4 id="waitpid-方法"><a href="#waitpid-方法" class="headerlink" title="waitpid 方法"></a>waitpid 方法</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">pid_t waitpid(pid_t pid, int *status, int options);</span><br><span class="line">返回值:</span><br><span class="line">	当正常返回的时候waitpid返回收集到的子进程的进程ID;</span><br><span class="line">	如果设置了选项WNOHANG,而调用中waitpid发现没有已退出的子进程可收集,则返回0;</span><br><span class="line">	如果调用中出错,则返回-1,这时errno会被设置成相应的值以指示错误所在;</span><br><span class="line">参数:</span><br><span class="line">	pid:</span><br><span class="line">		pid=-1, 等待任一个子进程.与wait等效.</span><br><span class="line">		pid&gt;0,等待其进程ID与pid相等的子进程</span><br><span class="line">	status:</span><br><span class="line">		WIFEXITED(status): 若为正常终止子进程返回的状态, 则为真.(查看进程是否正常退出)</span><br><span class="line">		WEXITSTATUS(status): 若WIFEXITED非零, 提取子进程退出码.(查看进程的退出码)</span><br><span class="line">	options:</span><br><span class="line">		WNOHANG: 若pid指定的子进程没有结束,则waitpid()函数返回0,不予以等待.若正常结束,则返回该子进程的ID.</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ul>
+<li>如果子进程已经退出, 调用 wait&#x2F;waitpid 时,wait&#x2F;waitpid 时，wait&#x2F;waitpid 会立即返回, 并且释放资源, 获得子进程退出信息.</li>
+<li>如果在任意时刻调用 wait&#x2F;waitpid, 子进程存在且正常运行, 则进程可能阻塞</li>
+<li>如果不存在该子进程,则立即出错返回</li>
+</ul>
+</blockquote>
+<p><img src="/../images/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6.assets/wait_upscayl_4x_digital-art-4x.png" alt="wait_upscayl_4x_digital-art-4x"></p>
+<h3 id="获取子进程-status"><a href="#获取子进程-status" class="headerlink" title="获取子进程 status"></a>获取子进程 status</h3><blockquote>
+<ul>
+<li>wait 和 waitpid, 都有一个 status 参数, 该参数是一个输出型参数, 由操作系统填充.</li>
+<li>如果传递 NULL, 表示不关心子进程的退出状态信息.</li>
+<li>否则, 操作系统会根据该参数,将子进程的退出信息反馈给父进程</li>
+<li>status 不能简单的当作整形来看待,可以当作位图来看待, 具体细节如下图(只研究 status 低 16 比特位) :</li>
+</ul>
+</blockquote>
+<p><img src="/../images/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6.assets/%E9%80%80%E5%87%BA%E7%8A%B6%E6%80%81p_upscayl_4x_digital-art-4x.png" alt="退出状态p_upscayl_4x_digital-art-4x"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">测试代码:</span><br><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;sys/wait.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line">#include &lt;string.h&gt;</span><br><span class="line">#include &lt;errno.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    pid_t pid;</span><br><span class="line">    if ((pid = fork()) == -1)</span><br><span class="line">        perror(&quot;fork&quot;), exit(1);</span><br><span class="line">    if (pid == 0)</span><br><span class="line">    &#123;</span><br><span class="line">        sleep(20);</span><br><span class="line">        exit(10);</span><br><span class="line">    &#125;</span><br><span class="line">    else</span><br><span class="line">    &#123;</span><br><span class="line">        int st;</span><br><span class="line">        int ret = wait(&amp;st);</span><br><span class="line">        if (ret &gt; 0 &amp;&amp; ((st &amp; 0X7F) == 0))</span><br><span class="line">        &#123;</span><br><span class="line">            // 正常退出</span><br><span class="line">            printf(&quot;child exit code : %d\n&quot;, (st &gt;&gt; 8) &amp; 0XFF);</span><br><span class="line">        &#125;</span><br><span class="line">        else if (ret &gt; 0)</span><br><span class="line">        &#123;</span><br><span class="line">            // 异常退出</span><br><span class="line">            printf(&quot;sig code : %d\n&quot;, st &amp; 0X7F);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">测试结果:</span><br><span class="line">[zhutian@VM-8-3-centos wait_status]$ ./wait_status</span><br><span class="line">child exit code : 10</span><br><span class="line">[zhutian@VM-8-3-centos wait_status]$ ./wait_status</span><br><span class="line">sig code : 9</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h3 id="具体代码实现"><a href="#具体代码实现" class="headerlink" title="具体代码实现"></a>具体代码实现</h3><blockquote>
+<ul>
+<li>进程的阻塞等待方式</li>
+</ul>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line">#include &lt;sys/wait.h&gt;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    pid_t pid;</span><br><span class="line">    pid = fork();</span><br><span class="line">    if (pid == -1)</span><br><span class="line">    &#123;</span><br><span class="line">        printf(&quot;%s fork error\n&quot;, __FUNCTION__);</span><br><span class="line">        return 1;</span><br><span class="line">    &#125;</span><br><span class="line">    else if (pid == 0)</span><br><span class="line">    &#123;</span><br><span class="line">        // child</span><br><span class="line">        printf(&quot;child is run, pid is :%d\n&quot;, getpid());</span><br><span class="line">        sleep(5);</span><br><span class="line">        exit(257);</span><br><span class="line">    &#125;</span><br><span class="line">    else</span><br><span class="line">    &#123;</span><br><span class="line">        int status = 0;</span><br><span class="line">        pid_t ret = waitpid(-1, &amp;status, 0); // 阻塞式等待，等待5s</span><br><span class="line">        printf(&quot;this is test for wait\n&quot;);</span><br><span class="line">        if (WIFEXITED(status) &amp;&amp; ret == pid)</span><br><span class="line">        &#123;</span><br><span class="line">            printf(&quot;wait child 5s success, child return code is : %d\n&quot;, WEXITSTATUS(status));</span><br><span class="line">        &#125;</span><br><span class="line">        else</span><br><span class="line">        &#123;</span><br><span class="line">            printf(&quot;wait child failed, return.\n&quot;);</span><br><span class="line">            return 1;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">运行结果:</span><br><span class="line">[zhutian@VM-8-3-centos blocked_wait]$ ./blocked_wait</span><br><span class="line">child is run, pid is :13842</span><br><span class="line">this is test for wait</span><br><span class="line">wait child 5s success, child return code is : 1</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<ul>
+<li>进程的非阻塞等待方式:</li>
+</ul>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">#include &lt;sys/wait.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    pid_t pid;</span><br><span class="line">    pid = fork();</span><br><span class="line">    if (pid &lt; 0)</span><br><span class="line">    &#123;</span><br><span class="line">        printf(&quot;%s fork error\n&quot;, __FUNCTION__);</span><br><span class="line">        return 1;</span><br><span class="line">    &#125;</span><br><span class="line">    else if (pid == 0)</span><br><span class="line">    &#123;</span><br><span class="line">        // child</span><br><span class="line">        printf(&quot;child is run , pid is : %d\n&quot;, getpid());</span><br><span class="line">        sleep(5);</span><br><span class="line">        exit(1);</span><br><span class="line">    &#125;</span><br><span class="line">    else</span><br><span class="line">    &#123;</span><br><span class="line">        // parent</span><br><span class="line">        int status = 0;</span><br><span class="line">        pid_t ret = 0;</span><br><span class="line">        do</span><br><span class="line">        &#123;</span><br><span class="line">            ret = waitpid(-1, &amp;status, WNOHANG); // 非阻塞式等待</span><br><span class="line">            if (ret == 0)</span><br><span class="line">            &#123;</span><br><span class="line">                printf(&quot;child is running\n&quot;);</span><br><span class="line">            &#125;</span><br><span class="line">            sleep(1);</span><br><span class="line">        &#125; while (ret == 0);</span><br><span class="line">        if (WIFEXITED(status) &amp;&amp; ret == pid)</span><br><span class="line">        &#123;</span><br><span class="line">            printf(&quot;wait child 5s success, child return code is :%d.\n&quot;, WEXITSTATUS(status));</span><br><span class="line">        &#125;</span><br><span class="line">        else</span><br><span class="line">        &#123;</span><br><span class="line">            printf(&quot;wait child failed, return.\n&quot;);</span><br><span class="line">            return 1;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">运行结果:</span><br><span class="line">[zhutian@VM-8-3-centos non_blocked_wait]$ ./non_blocked_wait</span><br><span class="line">child is running</span><br><span class="line">child is run , pid is : 19684</span><br><span class="line">child is running</span><br><span class="line">child is running</span><br><span class="line">child is running</span><br><span class="line">child is running</span><br><span class="line">wait child 5s success, child return code is :1.</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="进程程序替换"><a href="#进程程序替换" class="headerlink" title="进程程序替换"></a>进程程序替换</h2><h3 id="替换原理"><a href="#替换原理" class="headerlink" title="替换原理"></a>替换原理</h3><p>用 fork 创建子进程后执行的是和父进程相同的程序(但有可能执行不同的代码分支), 子进程往往要调用一种 exec 函数以执行另一个程序. 当进程调用一种 exec 函数时,该进程的用户空间代码和数据完全被新程序替换,从新程序的启动例程开始执行. 调用 exec 并不创建新进程,所以调用 exec 前后该进程的 pid 并未改变.</p>
+<p><img src="/../images/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6.assets/execp_upscayl_4x_digital-art-4x.png" alt="execp_upscayl_4x_digital-art-4x"></p>
+<h3 id="替换函数"><a href="#替换函数" class="headerlink" title="替换函数"></a>替换函数</h3><p>其实有六种以 exec 开头的函数,统称为 exec 函数:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line"></span><br><span class="line">int execl(const char *path, const char* arg, ...);</span><br><span class="line">int execlp(const char *file, const char *arg, ...);</span><br><span class="line">int execle(const char *path, const char *arg, ..., char *const envp[]);</span><br><span class="line">int execv(const char *path, char *const argv[]);</span><br><span class="line">int execvp(const char *file, char *const argv[]);</span><br></pre></td></tr></table></figure>
+
+<p>int execve(const char *path, char *const argv[],char *const envp[]) ;</p>
+<h3 id="函数解释"><a href="#函数解释" class="headerlink" title="函数解释"></a>函数解释</h3><blockquote>
+<ul>
+<li>这些函数如果调用成功则加载新的程序从启动代码开始执行,不再返回.</li>
+<li>如果调用出错则返回-1</li>
+<li>所以 exec 函数只有出错的返回值而没有成功的返回值.</li>
+</ul>
+</blockquote>
+<h3 id="命名理解"><a href="#命名理解" class="headerlink" title="命名理解"></a>命名理解</h3><p>这些函数原型看起来很容易混,但只要掌握了规律就很好记.</p>
+<blockquote>
+<ul>
+<li>l(list) : 表示参数采用列表</li>
+<li>v(vector) : 参数用数组</li>
+<li>p(path) : 有 p 自动搜索环境变量 PATH</li>
+<li>e(env) : 表示自己维护环境变量</li>
+</ul>
+</blockquote>
+<p><img src="/../images/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6.assets/execl_fp_upscayl_4x_digital-art-4x.png" alt="execl_fp_upscayl_4x_digital-art-4x"></p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">exec调用示例如下：</span><br><span class="line"></span><br><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    char *const argv[] = &#123;&quot;ps&quot;, &quot;-ef&quot;, NULL&#125;;</span><br><span class="line">    char *const envp[] = &#123;&quot;PATH=/bin:/usr/bin&quot;, &quot;TERM=console&quot;, NULL&#125;;</span><br><span class="line"></span><br><span class="line">    execl(&quot;/bin/ps&quot;, &quot;ps&quot;, &quot;-ef&quot;, NULL);</span><br><span class="line"></span><br><span class="line">    // 带p的，可以使用环境变量PATH，无需写全路径</span><br><span class="line">    execlp(&quot;ps&quot;, &quot;ps&quot;, &quot;-ef&quot;, NULL);</span><br><span class="line"></span><br><span class="line">    // 带e的，需要自己组装环境变量</span><br><span class="line">    execle(&quot;ps&quot;, &quot;ps&quot;, &quot;-ef&quot;, &quot;NULL&quot;, envp);</span><br><span class="line"></span><br><span class="line">    execv(&quot;/bin/ps&quot;, argv);</span><br><span class="line"></span><br><span class="line">    // 带p的，可以使用环境变量PATH，无需写全路径</span><br><span class="line">    execvp(&quot;ps&quot;, argv);</span><br><span class="line"></span><br><span class="line">    // 带e的,需要自己组装环境变量</span><br><span class="line">    execve(&quot;/bin/ps&quot;, argv, envp);</span><br><span class="line"></span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>事实上，只有 execve 是真正的系统调用，其他五个函数最终都调用 execve，所以 execve 在 man 手册 第 2 节，其他函数在 man 手册第 3 节。这些函数之间的关系如下图所示.</p>
+<p>下图 exec 函数族一个完整的例子:</p>
+<p><img src="/../images/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6.assets/exec%E8%A1%A8p_upscayl_4x_digital-art-4x.png" alt="exec表p_upscayl_4x_digital-art-4x"></p>
+<h3 id="我们可以综合前面的知识，做一个简易的-shell"><a href="#我们可以综合前面的知识，做一个简易的-shell" class="headerlink" title="我们可以综合前面的知识，做一个简易的 shell"></a>我们可以综合前面的知识，做一个简易的 shell</h3><p>考虑下面这个与 shell 典型的互动：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">[zhutian@VM-8-3-centos exec_example]$ ls</span><br><span class="line">exnec_example  exnec_example.c  makefile</span><br><span class="line">[zhutian@VM-8-3-centos exec_example]$ ps</span><br><span class="line">  PID TTY          TIME CMD</span><br><span class="line">  404 pts/1    00:00:00 ps</span><br><span class="line">25603 pts/1    00:00:00 bash</span><br></pre></td></tr></table></figure>
+
+<p>用下图的时间轴来表示事件的发生次序。其中时间从左向右。shell 由标识为 sh 的方块代表，它随着时间的流逝从左 向右移动。shell 从用户读入字符串”ls”。shell 建立一个新的进程，然后在那个进程中运行 ls 程序并等待那个进程结束。</p>
+<p><img src="/../images/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6.assets/shellp_upscayl_4x_digital-art-4x.png" alt="shellp_upscayl_4x_digital-art-4x"></p>
+<p>然后 shell 读取新的一行输入，建立一个新的进程，在这个进程中运行程序 并等待这个进程结束。 所以要写一个 shell，需要循环以下过程:</p>
+<blockquote>
+<p>1.获取命令行</p>
+<p>2.解析命令行</p>
+<p>3.建立一个子进程(fork)</p>
+<p>4.替换子进程(execvp)</p>
+<p>5.父进程等待子进程退出(wait)</p>
+</blockquote>
+<p>根据这些思路，和我们前面的学的技术，就可以自己来实现一个 shell 了。 实现代码:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line">#include &lt;stdio.h&gt;</span><br><span class="line">#include &lt;unistd.h&gt;</span><br><span class="line">#include &lt;stdlib.h&gt;</span><br><span class="line">#include &lt;sys/wait.h&gt;</span><br><span class="line">#include &lt;sys/types.h&gt;</span><br><span class="line">#include &lt;assert.h&gt;</span><br><span class="line">#include &lt;string.h&gt;</span><br><span class="line"></span><br><span class="line">#define DUBUG</span><br><span class="line"></span><br><span class="line">#define NUM 1024</span><br><span class="line">#define OPT_NUM 64</span><br><span class="line">#define USER &quot;USER&quot;</span><br><span class="line">#define MY_PWD &quot;PWD&quot;</span><br><span class="line">#define HOSTNAME &quot;HOSTNAME&quot;</span><br><span class="line"></span><br><span class="line">char lineCommand[NUM];</span><br><span class="line">char *myargv[OPT_NUM]; // 指针数组</span><br><span class="line">char delim[] = &quot; &quot;;</span><br><span class="line">int lastCode = 0;</span><br><span class="line">int lastSig = 0;</span><br><span class="line"></span><br><span class="line">int main()</span><br><span class="line">&#123;</span><br><span class="line">    while (1)</span><br><span class="line">    &#123;</span><br><span class="line">        printf(&quot;[%s@%s %s ]$ &quot;, getenv(USER), getenv(HOSTNAME), getenv(MY_PWD)); // 输出提示符</span><br><span class="line">        fflush(stdout);</span><br><span class="line">        char *s = fgets(lineCommand, sizeof(lineCommand) - 1, stdin); // 获取用户输入,输入时,输入\n</span><br><span class="line">        assert(s);</span><br><span class="line">        lineCommand[strlen(lineCommand) - 1] = 0;</span><br><span class="line"></span><br><span class="line">        // 字符串切割</span><br><span class="line">        //&quot;ls -a -l -i&quot; -&gt; &quot;ls&quot; &quot;-a&quot; &quot;-l&quot; &quot;-i&quot; -&gt; l-&gt;n</span><br><span class="line">        myargv[0] = strtok(lineCommand, delim);</span><br><span class="line">        int i = 1;</span><br><span class="line">        if (myargv[0] != NULL &amp;&amp; strcmp(myargv[0], &quot;ls&quot;) == 0)</span><br><span class="line">            myargv[i++] = &quot;--color=auto&quot;;</span><br><span class="line">        // 如果没有字串了,strtok-&gt;NULL,myargv[end]=NULL</span><br><span class="line">        while (myargv[i++] = strtok(NULL, delim))</span><br><span class="line">            ;</span><br><span class="line"></span><br><span class="line">        // 如果是cd命令,不需要创建子进程,让shell自己执行对应的命令,本质就是执行系统接口</span><br><span class="line">        // 像这种不需要让我们的子进程来执行,而是让shell自己执行的命令 --- 内建/内置命令</span><br><span class="line">        if (myargv[0] != NULL &amp;&amp; strcmp(myargv[0], &quot;cd&quot;) == 0)</span><br><span class="line">        &#123;</span><br><span class="line">            if (myargv[1] != NULL)</span><br><span class="line">                chdir(myargv[1]);</span><br><span class="line">            continue;</span><br><span class="line">        &#125;</span><br><span class="line">        if (myargv[0] != NULL &amp;&amp; myargv[1] != NULL &amp;&amp; strcmp(myargv[0], &quot;echo&quot;) == 0)</span><br><span class="line">        &#123;</span><br><span class="line">            if (strcmp(myargv[1], &quot;$?&quot;) == 0)</span><br><span class="line">            &#123;</span><br><span class="line">                printf(&quot;%d, %d\n&quot;, lastCode, lastSig);</span><br><span class="line">            &#125;</span><br><span class="line">            else</span><br><span class="line">            &#123;</span><br><span class="line">                printf(&quot;%s\n&quot;, myargv[1]);</span><br><span class="line">            &#125;</span><br><span class="line">            continue;</span><br><span class="line">        &#125;</span><br><span class="line">        // 内建命令 ---&gt; echo</span><br><span class="line"></span><br><span class="line">        // 测试是否成功,条件编译</span><br><span class="line">#ifdef DEBUG</span><br><span class="line">        for (int n = 0; myargv[n]; n++)</span><br><span class="line">        &#123;</span><br><span class="line">            printf(&quot;myargv[%d]: %s\n&quot;, n, myargv[n]);</span><br><span class="line">        &#125;</span><br><span class="line">#endif</span><br><span class="line"></span><br><span class="line">        // 执行命令</span><br><span class="line">        pid_t pid = fork();</span><br><span class="line">        if (pid &lt; 0)</span><br><span class="line">        &#123;</span><br><span class="line">            perror(&quot;fork error:&quot;);</span><br><span class="line">            exit(2);</span><br><span class="line">        &#125;</span><br><span class="line">        if (pid == 0)</span><br><span class="line">        &#123;</span><br><span class="line">            execvp(myargv[0], myargv);</span><br><span class="line">            exit(1);</span><br><span class="line">        &#125;</span><br><span class="line">        int status = 0;</span><br><span class="line">        pid_t ret = waitpid(pid, &amp;status, 0);</span><br><span class="line">        if (ret == pid)</span><br><span class="line">        &#123;</span><br><span class="line">            lastCode = ((status &gt;&gt; 8) &amp; 0xFF);</span><br><span class="line">            lastSig = (status &amp; 0x7F);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>我们来思考一下函数和进程之间的相似性</strong></p>
+<p>exec&#x2F;exit 就像 call&#x2F;return</p>
+<p>一个 C 程序有很多函数组成.一个函数可以调用另一个函数,同时向它传递一些参数,被调用的函数执行一定的操作,然后返回一个值.每个函数都有它的局部变量,不同的函数通过 call&#x2F;return 系统进行通信.</p>
+<p>这种通过参数和返回值在拥有私有数据的函数间通信的模式是结构化程序设计的基础.Linux 鼓励将这种应用于程序之内的模式扩展到程序之间.如下图:</p>
+<p><img src="/../images/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6.assets/callp_upscayl_4x_digital-art-4x.png" alt="callp_upscayl_4x_digital-art-4x"></p>
+<p>一个 C 程序可以 fork&#x2F;exec 另一个程序,并传给它一些参数.这个被调用的程序执行一定的操作,然后通过 exit(n)来返回值.调用它的进程可以通过 wait(&amp;ret)来获取 exit 的返回值.</p>
+
+        </div>
+
+        
+            <section class="post-copyright">
+                
+                    <p class="copyright-item">
+                        <span>Author:</span>
+                        <span>Zhu Tian</span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>Permalink:</span>
+                        <span><a href="http://example.com/2025/10/21/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6/">http://example.com/2025/10/21/Linux%E8%BF%9B%E7%A8%8B%E6%8E%A7%E5%88%B6/</a></span>
+                    </p>
+                
+                
+                    <p class="copyright-item">
+                        <span>License:</span>
+                        <span>Copyright (c) 2019 <a target="_blank" rel="noopener" href="http://creativecommons.org/licenses/by-nc/4.0/">CC-BY-NC-4.0</a> LICENSE</span>
+                    </p>
+                
+                
+                     <p class="copyright-item">
+                         <span>Slogan:</span>
+                         <span>Do you believe in <strong>DESTINY</strong>?</span>
+                     </p>
+                
+
+            </section>
+        
+        <section class="post-tags">
+            <div>
+                <span>Tag(s):</span>
+                <span class="tag">
+                    
+                </span>
+            </div>
+            <div>
+                <a href="javascript:window.history.back();">back</a>
+                <span>· </span>
+                <a href="/">home</a>
+            </div>
+        </section>
+        <section class="post-nav">
+            
+            
+            <a class="next" rel="next" href="/2025/10/21/%E5%8F%8C%E6%8C%87%E9%92%88-%E7%A7%BB%E5%8A%A8%E9%9B%B6/">双指针_移动零</a>
+            
+        </section>
+
+
+    </article>
+</div>
+
+            </div>
+            <footer id="footer" class="footer">
+    <div class="copyright">
+        <span>© Zhu Tian | Powered by <a href="https://hexo.io" target="_blank">Hexo</a> & <a href="https://github.com/Siricee/hexo-theme-Chic" target="_blank">Chic</a></span>
+    </div>
+</footer>
+
+    </div>
+</body>
+
+</html>
